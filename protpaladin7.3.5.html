@@ -8,6 +8,11 @@
             * {
                 font-family:sans-serif;
             }
+
+            svg {
+                background: transparent;
+            }
+
             .chart-container{
                 max-width:960px;
                 margin:0 auto;
@@ -22,7 +27,7 @@
                 display: inline-block;
                 position: relative;
                 width: 100%;
-                padding-bottom: 100%;
+                padding-bottom: 150%;
                 vertical-align: top;
                 overflow: hidden;
             }
@@ -80,10 +85,6 @@
                 border: 0px;        
                 border-radius: 3px;         
                 pointer-events: none;           
-            }
-
-            svg {
-                background: transparent;
             }
 
             .selecting {
@@ -160,9 +161,9 @@
                     margin = {top: 20, right: 20, bottom: 30, left: 200},
                     parseDate = d3.timeParse("%m/%Y"),
                     width = 860 - margin.left - margin.right,
-                    height = 960 - margin.top - margin.bottom,
+                    height = 1600 - margin.top - margin.bottom,
                     xScale = d3.scaleLinear().rangeRound([0, width]),
-                    yScale = d3.scaleBand().rangeRound([height, 0]).padding(0.1),
+                    yScale = d3.scaleBand().rangeRound([1400, 0]).padding(0.1),
                     color = d3.scaleOrdinal(d3.schemeCategory20b),
                     zScale = d3.scaleOrdinal(d3.schemeCategory20b),
                     xAxis = d3.axisBottom(xScale),
@@ -246,7 +247,7 @@
                     svg.append("text")
                         .text("Reset")
                         .attr("class", "controlbutton")
-                        .attr("x", width - 40)
+                        .attr("x", width)
                         .on('click', function(d,i) {
                             resetAll();                                                    
                         });
@@ -275,6 +276,7 @@
             <span class="author">created by Woliance</span>
             <p class="note">Note: The chart is truncated for clarity.</p>
             <div id='stacked-bar'></div>
+            <div class="footer">Thanks Woli!</div>
         </div>
         <script>
             drawChart();

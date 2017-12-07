@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.7.0/d3-legend.min.js"></script>
+        <style>
+            * {
+                font-family:sans-serif;
+            }
+            .chart-container{
+                max-width:960px;
+                margin:0 auto;
+            }
+            .author{
+                position:relative;
+                top:-25px;
+                font-size:13px;
+                font-style: italic;
+            }
+            #stacked-bar {
+                display: inline-block;
+                position: relative;
+                width: 100%;
+                padding-bottom: 100%;
+                vertical-align: top;
+                overflow: hidden;
+            }
+            .svg-content {
+                display: inline-block;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+            .axis text {
+                font: 13px sans-serif;
+            }
+            .axis line,
+            .axis path {
+                fill: none;
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+            .axis--x .tick text{
+                font-size:10px;
+            }
+
+            .axis--y{
+                background:red;
+            }
+            .axis.axis--y .tick text{
+                fill:blue;
+                cursor:pointer;
+            }
+
+            .path-line {
+                fill: none;
+                stroke: yellow;
+                stroke-width: 1.5px;
+            }
+
+            .layer .selectable:hover{
+                fill:blue;
+            }
+
+            .controlbutton{
+                fill:blue;
+                font-family: sans-serif;
+                font-size:14px;
+                cursor:pointer;
+            }
+
+            div.tooltip {   
+                position: absolute;         
+                text-align: center;         
+                width: 60px;                  
+                padding: 2px;
+                font: 12px sans-serif;      
+                background: lightblue; 
+                border: 0px;        
+                border-radius: 3px;         
+                pointer-events: none;           
+            }
+
+            svg {
+                background: transparent;
+            }
+
+            .selecting {
+                opacity:0.25;
+            }
+
+            .selected {
+                opacity: 1;
+                fill:blue;
+            }
+
+            .hideme{
+                opacity:0;
+            }
+
+        </style>
+        <script>
+            var baseVal = 0;
+            var selectingItems = false;
+
+            const numberWithCommas = (x) => {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
+            function resetAll(){
+                selectingItems = false;
+                d3.selectAll(".selectable")
+                    .classed("selected", false)
+                    .classed("selecting", false)
+                    .classed("hideme", false);
+            }
+
+            function hideAll(){
+                selectingItems = true;
+                d3.selectAll(".selectable")
+                    .classed("selecting",true)
+                    .classed("selected",false)
+            }
+
+            function hideRow(itemName, clickedItem){
+                var trinket = d3.selectAll("."+itemName)
+                    .attr("data-hidden", true);
+                trinket.classed("hideme", !trinket.classed("hideme"));
+                trinket.classed("selecting", !trinket.classed("selecting"));
+            }
+
+            function selectItem(selecteditem){
+                if(!selectingItems){
+                    hideAll();
+                }
+                var trinket = d3.select(selecteditem);
+                trinket.classed("selected", !trinket.classed("selected"));                
+            }
+
+            function sanitizeText(text) {
+                return text.replace(/[^a-zA-Z0-9]/g, '');
+            }
+
+            function drawChart(){
+                stackedBarChart.draw({
+                    element: 'stacked-bar'
+                });
+            }
+
+            var legendRectSize = 10;
+            var legendSpacing = 2;
+
+            var stackedBarChart = {
+                draw: function(config) {
+                    me = this,
+                    domEle = config.element,
+                    stackKey = config.key,
+                    data = config.data,
+                    margin = {top: 20, right: 20, bottom: 30, left: 200},
+                    parseDate = d3.timeParse("%m/%Y"),
+                    width = 860 - margin.left - margin.right,
+                    height = 960 - margin.top - margin.bottom,
+                    xScale = d3.scaleLinear().rangeRound([0, width]),
+                    yScale = d3.scaleBand().rangeRound([height, 0]).padding(0.1),
+                    color = d3.scaleOrdinal(d3.schemeCategory20b),
+                    zScale = d3.scaleOrdinal(d3.schemeCategory20b),
+                    xAxis = d3.axisBottom(xScale),
+                    yAxis =  d3.axisLeft(yScale),
+                    svg = d3.select("#"+domEle).append("svg")
+                        .attr("preserveAspectRatio", "xMinYMin meet")
+                        .attr("viewBox", "0 0 960 2000")
+                        .classed("svg-content", true)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    d3.csv("protpally7.3.5.csv", function(d, i, columns) {
+                          max = 0;
+                          for (i = 1, t = 0; i < columns.length; ++i){
+                            t += d[columns[i]] = +d[columns[i]];
+                            if(d[columns[i]] > max){max = d[columns[i]]}
+                          } 
+                          d.max = max;
+                          d.total = t;
+                          return d;
+                        }, function(error, data) {
+                        if (error) throw error;
+
+
+                    var keys = data.columns.slice(1);
+
+                    data.sort(function(a, b) { return a.total - b.total; });
+                    yScale.domain(data.map(function(d) { return d.Name; }));                 // x.domain...
+                    xScale.domain([baseVal, d3.max(data, function(d) { return d.max; })]).nice();  // y.domain...
+                    zScale.domain(keys);
+
+
+                    //.data(d3.stack().keys(keys)(data))
+                    var layer = svg.selectAll(".layer")
+                        .data(d3.stack().keys(keys)(data))
+                        .enter().append("g")
+                        .attr("class", "layer")
+                        .style("fill", function(d, i) { return color(i); });
+
+
+                    // Define the div for the tooltip
+                    var tip = d3.select("body").append("div")   
+                        .attr("class", "tooltip")               
+                        .style("opacity", 0);
+
+                    layer.selectAll("rect")
+                        .data(function(d) { return d; })
+                        .enter().append("rect")
+                        .attr("y", function(d) { return yScale(d.data.Name); })
+                        .attr("x", function(d) { return xScale(d[0]); })
+                        .attr("class", function(d) { return sanitizeText(d.data.Name) + " selectable"; })
+                        .attr("height", yScale.bandwidth() - 2)
+                        .attr("width", function(d) { return xScale(d[1]-d[0]); })
+                        .on("mouseover", function(d, i, k) {
+                            var thisName = d3.select(this.parentNode).datum().key;
+
+                            tip.transition()        
+                                .duration(200)      
+                                .style("opacity", .9);      
+                            tip .html(thisName + ": " + numberWithCommas(d[1]+1210000) + "<br>(+" + numberWithCommas(d[1]-d[0])+")")  
+                                .style("left", (d3.event.pageX + 5) + "px")     
+                                .style("top", (d3.event.pageY - 15) + "px");    
+                            })                  
+                        .on("mouseout", function(d) {       
+                            tip.transition()        
+                                .duration(250)      
+                                .style("opacity", 0);   
+                        })
+                        .on('click', function(d,i) {
+                            selectItem(this);                                                        
+                        });
+
+                    var yaxis = svg.append("g")
+                        .attr("class", "axis axis--y")
+                        .attr("transform", "translate(0,0)")
+                        .call(yAxis);
+
+                    svg.selectAll(".axis.axis--y .tick")
+                        .on("click", function(d) { hideRow(sanitizeText(d)); });
+
+                    svg.append("text")
+                        .text("Reset")
+                        .attr("class", "controlbutton")
+                        .attr("x", width - 40)
+                        .on('click', function(d,i) {
+                            resetAll();                                                    
+                        });
+
+
+                    // svg.append("g")
+                    //     .attr("class", "legendLinear")
+                    //     .attr("transform", "translate(0,"+(height+30)+")");
+                    // var legend = d3.legend.color()
+                    //     .shapeWidth(height/4)
+                    //     .shapePadding(10)
+                    //     .orient('horizontal')
+                    //     .scale(d3.schemeCategory20b);
+                    // svg.select(".legendLinear")
+                    //     .call(legend);
+
+                });
+                }
+            }
+
+        </script>
+    </head>
+    <body>
+        <div class="chart-container">
+            <h1>Protection Paladin Trinket Sims - DPS</h1>
+            <span class="author">created by Woliance</span>
+            <p class="note">Note: The chart is truncated for clarity.</p>
+            <div id='stacked-bar'></div>
+        </div>
+        <script>
+            drawChart();
+        </script>
+    </body>
+</html>
+

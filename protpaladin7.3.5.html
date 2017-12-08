@@ -280,8 +280,7 @@
                     legend.append('rect')                                     
                         .attr('width', legendRectSize)                          
                         .attr('height', legendRectSize)                         
-                        .style('fill', color)                                   
-                        .style('stroke', color);                                
+                        .style("fill", function(d, i) { return color(i); });                                
 
                     legend.append('text')                                     
                         .attr('x', 0)              

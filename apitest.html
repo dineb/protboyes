@@ -1,0 +1,60 @@
+<html>
+        <head>
+
+        </head>
+        <body>
+                <h1>Authors</h1>
+                <ul id="authors"></ul>
+
+            <script>
+                
+                    function createNode(element) {
+                        return document.createElement(element);
+                    }
+                
+                    function append(parent, el) {
+                      return parent.appendChild(el);
+                    }
+                
+                    // const ul = document.getElementById('authors');
+                    const url = 'http://moox.dk/~woliance/index.php?region=EU&realm=Kazzak&name=Woliance';
+                    // //const url = 'https://randomuser.me/api/?results=10';
+                    // fetch(url, {mode: 'cors'})
+                    // .then((resp) => resp.json())
+                    // .then(function(data) {
+                      // let authors = data.results;
+                      // return authors.map(function(author) {
+                      //   let li = createNode('li'),
+                      //       img = createNode('img'),
+                    span = createNode('span');
+                      //   img.src = author.picture.medium;
+                        //span.innerHTML = `${author.name.first} ${author.name.last}`;
+                        // span.innerHTML = data.results;
+                        // append(li, img);
+                        // append(li, span);
+                        // append(ul, li);
+                      // })
+                    //})
+                    // .catch(function(error) {
+                    //   console.log(error);
+                    // });   
+
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.send();
+                     
+                    xhr.onreadystatechange = processRequest;
+                     
+                    function processRequest(e) {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            var response = JSON.parse(xhr.responseText);
+                            span.innerHTML = data.results;
+                        }
+                    }
+
+
+            </script>
+
+        </body>
+</html>
